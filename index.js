@@ -13,50 +13,97 @@ function homeDir(){
   return process.env[(process.platform == 'win32') ? 'USERPROFILE' : 'HOME'];
 }
 
-function globOpts(){
-  return {cwd:homeDir()};
+function filterRegistry(path){
+  var registryRaw = require(path);
+  return {
+    raw:registryRaw,
+    files:registryRaw.files,
+    path:path
+  };
 }
 
-var pattern =
-    '{.,Library/Preferences/}{WebStorm,IntelliJIdea}*{/config/templates,/templates}';
-
-
-var dirs = glob.sync(pattern,globOpts());
-
-var files = require('../angularjs-webstorm-livetpls/live_template_registry.json').files;
-
-var filesChecked = _(files).map(function(description,file){
-
-  var conflict = _(dirs).any(function(dir){
-    return fs.existsSync(path.resolve(homeDir(),dir,file));
-  });
-
-  return {
-    checked:true,
-    name: clc[conflict ? 'red' : 'blue'](file + ': ') + description,
-    value:file
-  };
-}).values().__wrapped__;
-
-
-console.log(filesChecked);
 //noinspection JSValidateTypes
 inquirer.prompt([
+  {
+    name:'registry',
+    type:'input',
+    message:'registry file',
+    validate:function(registryFile){
+      if(fs.existsSync(registryFile)) {
+        return true;
+      }
+      return clc.redBright(registryFile) + ' does not exist.';
+    },
+    when:function(answers){
+      var def = 'live_template_registry.json';
+      if(process.argv.length > 2){
+        def = process.argv[2];
+      }
+      if(fs.existsSync(def)){
+        answers.registry = filterRegistry(def);
+        return false;
+      }
+      return true;
+    },
+    filter:filterRegistry
+  },
+  {
+    name:'failBadRegistry',
+    type:'confirm',
+    'default':false,
+    message:'Not all files listed in registry exist. There might be something wrong. Continue anyways?',
+    when:function(answers){
+      var registryDir = path.dirname(answers.registry.path);
+      return  !_(answers.registry.files).all(function(desc,file){
+        console.log('checking: ' + file);
+        return fs.existsSync(path.resolve(registryDir,file));
+      });
+    }
+  },
+  {
+    name:'shouldnothappen',
+    message:'barf',
+    when:function(answers){
+      if(answers.failBadRegistry === false){
+        process.exit(1);
+      }
+      return false;
+    }
+  },
   {
     name:'dirs',
     type:'checkbox',
     message:'Where do you want the templates installed?',
-    choices:dirs
+    choices:function(answers){
+      var opts = {cwd:homeDir()};
+      var pattern = '{.,Library/Preferences/}{WebStorm,IntelliJIdea}*{/config/templates,/templates}';
+      return glob.sync(pattern,opts);
+    },
+    validate:function(choices){
+      if(choices.length > 0) return true;
+      return 'Pick at least one install directory.'
+    }
   },
   {
     name:'files',
     type:'checkbox',
-    message:'Which files do you want to install?',
-    choices:filesChecked
+    message:'Which files do you want to install?' +
+        clc.redBright('red highlight means that an existing file will be overwritten'),
+    choices:function(answers){
+      return _(answers.registry.files).map(
+          function(description,file){
+            var conflict = _(answers.dirs).any(function(dir){
+              return fs.existsSync(path.resolve(homeDir(),dir,file));
+            });
+            return {
+              checked:true,
+              name: clc[conflict ? 'redBright' : 'cyan'](file + ': ') + description,
+              value:file
+            };
+          }
+      ).values().__wrapped__;
+    }
   }
 ],function allDone(answers){
-  console.log(answers.dirs);
-  console.log(answers.files);
-
 
 });
