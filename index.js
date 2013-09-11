@@ -3,6 +3,7 @@ var fs = require('fs'),
     gift = require('gift'),
     glob = require('glob'),
     async = require('async'),
+    clc = require('cli-color'),
     inquirer = require('inquirer'),
     _ = require('lodash')
     ;
@@ -22,21 +23,40 @@ var pattern =
 
 var dirs = glob.sync(pattern,globOpts());
 
+var files = require('../angularjs-webstorm-livetpls/live_template_registry.json').files;
+
+var filesChecked = _(files).map(function(description,file){
+
+  var conflict = _(dirs).any(function(dir){
+    return fs.existsSync(path.resolve(homeDir(),dir,file));
+  });
+
+  return {
+    checked:true,
+    name: clc[conflict ? 'red' : 'blue'](file + ': ') + description,
+    value:file
+  };
+}).values().__wrapped__;
+
+
+console.log(filesChecked);
 //noinspection JSValidateTypes
 inquirer.prompt([
   {
-    name:'installDirs',
+    name:'dirs',
     type:'checkbox',
     message:'Where do you want the templates installed?',
     choices:dirs
   },
   {
-    name:'proceed',
-    type:'confirm',
-    message:'Proceed?'
+    name:'files',
+    type:'checkbox',
+    message:'Which files do you want to install?',
+    choices:filesChecked
   }
 ],function allDone(answers){
-  console.log(answers.installDirs)
+  console.log(answers.dirs);
+  console.log(answers.files);
 
 
 });
