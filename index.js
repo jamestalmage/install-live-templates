@@ -20,6 +20,23 @@ var pattern =
     '{.,Library/Preferences/}{WebStorm,IntelliJIdea}*{/config/templates,/templates}';
 
 
-_(glob.sync(pattern,globOpts())).forEach(function(val){
-   console.log(val);
+var dirs = glob.sync(pattern,globOpts());
+
+//noinspection JSValidateTypes
+inquirer.prompt([
+  {
+    name:'installDirs',
+    type:'checkbox',
+    message:'Where do you want the templates installed?',
+    choices:dirs
+  },
+  {
+    name:'proceed',
+    type:'confirm',
+    message:'Proceed?'
+  }
+],function allDone(answers){
+  console.log(answers.installDirs)
+
+
 });
