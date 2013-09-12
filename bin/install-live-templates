@@ -1,0 +1,17 @@
+#!/usr/bin/env node
+var installFuncs = require('../index.js');
+var method = installFuncs[process.argv[2]];
+
+if(!method){
+  console.log('usage is:');
+  console.log('install [registryFile]');
+  console.log('backup [registryFile]');
+}
+else {
+  var filePath = 'live_template_registry.json';
+  if(process.argv.length > 3){
+    filePath = process.argv[3];
+  }
+  method(filePath);
+}
+

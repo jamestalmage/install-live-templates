@@ -50,17 +50,7 @@ function backup(registryFilePath){
       }).done() ;
 }
 
-var method = {backup:backup,install:install}[process.argv[2]];
-
-if(!method){
-  console.log('usage is:');
-  console.log('install [registryFile]');
-  console.log('backup [registryFile]');
-}
-else {
-  var filePath = 'live_template_registry.json';
-  if(process.argv.length > 3){
-    filePath = process.argv[3];
-  }
-  method(filePath);
-}
+module.exports = {
+  backup:backup,
+  install:install
+};
