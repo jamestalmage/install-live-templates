@@ -1,11 +1,18 @@
 var path = require('path'),
     templateUtils = require('./lib/template-utils.js'),
-    _ = require('lodash')
+    _ = require('lodash'),
+    q = require('q');
     ;
 
-templateUtils.findRegistry(function(registry){
-  templateUtils.chooseDirs(function(installDirs){
-    templateUtils.pickFiles(registry,installDirs,function(files){
+templateUtils
+    .findRegistry()
+    .then(function(registry){
+      return [registry,templateUtils.chooseDirs()]
+    })
+    .spread(function(registry,installDirs){
+      return [installDirs,templateUtils.pickFiles(registry,installDirs)];
+    })
+    .spread(function(installDirs,files){
       _(installDirs).forEach(function(installDir){
         _(files).forEach(function(file){
           templateUtils.copyFile(file.path,path.resolve(installDir.path,file.name),function(err){
@@ -15,5 +22,3 @@ templateUtils.findRegistry(function(registry){
         });
       });
     });
-  });
-});
