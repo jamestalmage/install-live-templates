@@ -1,6 +1,6 @@
 {
   "name": "live-template-installer",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Command line utility for automatically installing live templates to Intellij or Webstorm",
   "main": "index.js",
   "scripts": {
