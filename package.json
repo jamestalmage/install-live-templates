@@ -28,7 +28,7 @@
     "url": "https://github.com/jamestalmage/install-live-templates/issues"
   },
   "bin":{
-    "install-live-templates":"./bin/install-live-templates"
+    "live-templates":"./bin/live-templates"
   },
   "dependencies": {
     "gift": "0.0.6",
